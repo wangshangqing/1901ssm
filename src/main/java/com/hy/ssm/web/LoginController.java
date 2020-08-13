@@ -31,5 +31,7 @@ public class LoginController {
         }finally {
         }
         return "/list.jsp";
+
+
     }
 }

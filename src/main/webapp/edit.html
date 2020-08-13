@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <title>table模块快速使用</title>
+    <link rel="stylesheet" th:href="@{/layui/css/layui.css}" media="all">
+</head>
+<body>
+<form class="layui-form" action="/student/add.do" id="myform">
+    <div class="layui-form-item">
+        <label class="layui-form-label">姓名</label>
+        <div class="layui-input-block">
+            <input type="text" th:value="${stu.stuName}" lay-verify="stuName" name="stuName" placeholder="请输入" autocomplete="off" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">性别</label>
+        <div class="layui-input-block">
+            <input type="radio" name="sex" value="1" title="男" th:checked="${stu.sex eq '1'} ? true : false">
+            <input type="radio" name="sex" value="2" title="女" th:checked="${stu.sex eq '2'} ? true : false">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <input type="hidden" th:value="${stu.classno}" id="clano">
+        <label class="layui-form-label">班级</label>
+        <div class="layui-input-block">
+            <select name="classno" lay-filter="aihao" id="cla">
+            </select>
+        </div>
+    </div>
+
+    <div class="layui-form-item">
+        <label class="layui-form-label">爱好</label>
+        <div class="layui-input-block">
+            <input type="checkbox" name="" title="写作" lay-skin="primary" checked>
+            <input type="checkbox" name="" title="发呆" lay-skin="primary">
+            <input type="checkbox" name="" title="禁用" lay-skin="primary" disabled>
+        </div>
+    </div>
+
+    <!--<div class="layui-form-item">
+        <label class="layui-form-label">身份证</label>
+        <div class="layui-input-inline">
+            <input type="text" name="img" id="img1" placeholder="请输入" autocomplete="off" class="layui-input">
+        </div>
+        <button type="button" class="layui-btn layui-btn-sm" id="test1">
+            <i class="layui-icon layui-icon-upload-circle">上传图片</i>
+        </button>
+    </div>-->
+    <div class="layui-form-item">
+        <input type="hidden" name="img" id="img1">
+        <label class="layui-form-label">身份证</label>
+        <div class="layui-input-inline">
+            <button type="button" class="layui-btn" id="test1">上传图片</button>
+            <div class="layui-upload">
+                <div class="layui-upload-list">
+                    <img class="layui-upload-img" id="demo1" style="width: 100px;height: 100px;" th:src="@{|/upload/${stu.img}|}">
+                    <p id="demoText"></p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+
+
+    <div class="layui-form-item">
+        <div class="layui-input-block">
+            <button class="layui-btn" lay-submit lay-filter="submit">立即提交</button>
+            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+        </div>
+    </div>
+    <!-- 更多表单结构排版请移步文档左侧【页面元素-表单】一项阅览 -->
+</form>
+<table id="demo" lay-filter="test"></table>
+<script type="text/html" id="barDemo">
+    <a class="layui-btn layui-btn-xs" lay-event="detail">查看</a>
+    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+
+<script type="text/html" id="barDemo1">
+    <a class="layui-btn layui-btn-xs" lay-event="add"><i class="layui-icon layui-icon-add-circle-fine">添加</i></a>
+    <a class="layui-btn layui-btn-xs" lay-event="dels"><i class="layui-icon layui-icon-delete">删除</i></a>
+</script>
+<script th:src="@{/layui/layui.js}"></script>
+<script>
+    layui.use(['table','form','layer','jquery','upload'], function(){
+        var form=layui.form;
+        var layer=layui.layer;
+        var upload = layui.upload;
+
+        var $=layui.jquery;
+
+
+        $(function(){
+            $.ajax({
+                type: "GET",
+                url: "/student/listcla.do",
+                dataType: "json",
+                success: function(data){
+                    var clano=document.getElementById("clano").value;
+                    for(var i=0;i<data.length;i++){
+                        var d=data[i];
+                        var p=new Option();
+                        p.text=d.classname;
+                        p.value=d.cno;
+                        if(d.cno==clano){
+                            p.selected=true;
+                        }
+                        $("#cla").append(p);
+                    }
+                    form.render();
+                }
+            });
+        })
+
+        //执行实例
+        var uploadInst = upload.render({
+            elem: '#test1' //绑定元素
+            ,url: '/student/fileupload.do' //上传接口
+            ,before: function(obj){
+                //预读本地文件示例，不支持ie8
+                obj.preview(function(index, file, result){
+                    $('#demo1').attr('src', result); //图片链接（base64）
+                });
+            }
+            ,done: function(res){
+                console.log(res);
+                document.getElementById("img1").value=res.data;
+                layer.alert('酷毙了', {icon: 1});
+            }
+            ,error: function(){
+                //请求异常回调
+                layer.msg('不开心。。', {icon: 5});
+            }
+        });
+
+
+        form.on('submit(submit)', function(data){
+            //把表单的数据提交到后台
+            //关闭弹出层
+            //当你在iframe页面关闭自身时
+            document.getElementById("myform").submit();
+            var index = parent.layer.getFrameIndex(window.name); //先得到当前iframe层的索引
+            parent.layer.close(index); //再执行关闭
+            return false; //阻止表单跳转。如果需要表单跳转，去掉这段即可。
+        });
+
+        form.verify({
+            stuName: function(value, item){ //value：表单的值、item：表单的DOM对象
+                alert(value);
+                alert(value.length);
+                if(value.length>5){
+                    return '用户名长度不能大于5个汉字';
+                }
+            }
+        });
+
+    });
+</script>
+</body>
+</html>
